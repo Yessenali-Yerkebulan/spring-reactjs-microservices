@@ -12,8 +12,9 @@
     </parent>
 
     <artifactId>inventory-service</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>inventory-service</name>
+    <description>inventory-service</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -29,7 +30,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
