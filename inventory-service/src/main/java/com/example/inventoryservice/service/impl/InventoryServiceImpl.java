@@ -20,7 +20,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public List<InventoryResponse> isInStock(List<String> skuCodes) {
-        List<Inventory> inventories = inventoryRepository.findBySkuCodeIn();
+        List<Inventory> inventories = inventoryRepository.findBySkuCodeIn(skuCodes);
         return InventoryMapper.toInventoryResponses(inventories);
     }
 }

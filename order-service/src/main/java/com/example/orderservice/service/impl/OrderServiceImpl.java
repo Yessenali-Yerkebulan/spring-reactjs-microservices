@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
-    private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
 
     @Override
     @Transactional
@@ -55,8 +55,8 @@ public class OrderServiceImpl implements OrderService {
         List<String> skuCodes = orderLineItems.stream()
                 .map(OrderLineItemRequest::getSkuCode)
                 .toList();
-        InventoryResponse[] inventoryResponses = webClient.get()
-                .uri("http://inventory-service/api/inventory",
+        InventoryResponse[] inventoryResponses = webClientBuilder.build().get()
+                .uri("http://inventory-service/api/v1/inventory",
                         uriBuilder -> uriBuilder.queryParam("skuCodes", skuCodes).build()
                 )
                 .retrieve()
