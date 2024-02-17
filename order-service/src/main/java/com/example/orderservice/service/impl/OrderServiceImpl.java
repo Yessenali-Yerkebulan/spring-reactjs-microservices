@@ -3,6 +3,7 @@ package com.example.orderservice.service.impl;
 import com.example.orderservice.dto.InventoryResponse;
 import com.example.orderservice.dto.OrderLineItemRequest;
 import com.example.orderservice.dto.OrderRequest;
+import com.example.orderservice.event.InventoryEvent;
 import com.example.orderservice.event.OrderPlacedEvent;
 import com.example.orderservice.model.Order;
 import com.example.orderservice.model.OrderLineItem;
@@ -25,7 +26,8 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
-    private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
+    private final KafkaTemplate<String, OrderPlacedEvent> kafkaOrderTemplate;
+    private final KafkaTemplate<String, InventoryEvent> kafkaInventoryTemplate;
 
     @Override
     @Transactional
@@ -33,10 +35,12 @@ public class OrderServiceImpl implements OrderService {
         Order order = new Order();
         order.setOrderNumber(UUID.randomUUID().toString());
         order.setOrderLineItems(createOrderLineItem(orderRequest.getOrderLineItems()));
+        List<String> skuCodes = getSkuCodes(orderRequest.getOrderLineItems());
 
-        if (hasProductsInStock(orderRequest.getOrderLineItems())) {
+        if (hasProductsInStock(skuCodes)) {
             orderRepository.save(order);
-            kafkaTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
+            kafkaOrderTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
+            kafkaInventoryTemplate.send("inventoryTopic", new InventoryEvent(skuCodes));
             return "Order saved successfully";
         } else {
             throw new IllegalArgumentException("Product is not in stock, please try again later");
@@ -55,10 +59,7 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
     }
 
-    private boolean hasProductsInStock(List<OrderLineItemRequest> orderLineItems) {
-        List<String> skuCodes = orderLineItems.stream()
-                .map(OrderLineItemRequest::getSkuCode)
-                .toList();
+    private boolean hasProductsInStock(List<String> skuCodes) {
         InventoryResponse[] inventoryResponses = webClientBuilder.build().get()
                 .uri("http://inventory-service/api/v1/inventory",
                         uriBuilder -> uriBuilder.queryParam("skuCodes", skuCodes).build()
@@ -67,5 +68,11 @@ public class OrderServiceImpl implements OrderService {
                 .bodyToMono(InventoryResponse[].class)
                 .block();
         return Arrays.stream(inventoryResponses).allMatch(InventoryResponse::isInStock);
+    }
+
+    private List<String> getSkuCodes(List<OrderLineItemRequest> orderLineItems) {
+        return orderLineItems.stream()
+                .map(OrderLineItemRequest::getSkuCode)
+                .toList();
     }
 }

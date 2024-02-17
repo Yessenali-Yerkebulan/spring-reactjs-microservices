@@ -30,7 +30,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = new Product();
         product.setName(productRequest.getName());
         product.setPrice(productRequest.getPrice());
-        product.setDescription(product.getDescription());
+        product.setDescription(productRequest.getDescription());
         productRepository.save(product);
         return ProductMapper.toProductResponse(product);
     }

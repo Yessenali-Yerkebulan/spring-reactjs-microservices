@@ -1,5 +1,7 @@
 package com.example.notificationservice;
 
+import com.example.notificationservice.event.InventoryEvent;
+import com.example.notificationservice.event.OrderPlacedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -12,8 +14,13 @@ public class NotificationServiceApplication {
         SpringApplication.run(NotificationServiceApplication.class, args);
     }
 
-    @KafkaListener(topics = "notificationTopic")
-    public void handleNotification(OrderPlacedEvent orderPlacedEvent) {
+    @KafkaListener(topics = "notificationTopic", groupId = "notificationId")
+    public void handleOrderNotification(OrderPlacedEvent orderPlacedEvent) {
         log.info("Received Notification for Order - {}", orderPlacedEvent.getOrderNumber());
+    }
+
+    @KafkaListener(topics = "inventoryTopic", groupId = "notificationId")
+    public void handleInventoryNotification(InventoryEvent inventoryEvent) {
+        log.info("Received Notification for Order - {}", inventoryEvent.getSkuCodes());
     }
 }
